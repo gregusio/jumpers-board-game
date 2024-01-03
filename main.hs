@@ -1,4 +1,3 @@
-import Text.XHtml (color, body)
 data Board = Board
     {
         a8 :: Field, b8 :: Field, c8 :: Field, d8 :: Field, e8 :: Field, f8 :: Field, g8 :: Field, h8 :: Field,
@@ -202,7 +201,8 @@ checkFieldCoords a b =
 checkMoves :: [String] -> Bool
 checkMoves moves =
     length moves == length (filter (\a -> length a == 2) moves) &&
-    foldl (\acc [a, b] -> acc && (checkFieldCoords a b)) True moves
+    foldl (\acc [a, b] -> acc && (checkFieldCoords a b)) True moves &&
+    length moves > 1
 
 data Direction = Forward | Backward deriving Eq
 
@@ -236,21 +236,43 @@ getNextLetter c = succ c
 
 tryOneJump :: Board -> String -> String -> Bool
 tryOneJump board [a, b] [c, d]
-    | a == c && b < d = checkColumnJump board [a, b] [c, d] (succ b) Forward
-    | a == c && b > d = checkColumnJump board [a, b] [c, d] (pred b) Backward
+    | a == c && (succ b) < d = checkColumnJump board [a, b] [c, d] (succ b) Forward
+    | a == c && (pred b) > d = checkColumnJump board [a, b] [c, d] (pred b) Backward
     | a == c && b == d = True
-    | a < c && b == d = checkRowJump board [a, b] [c, d] (succ a) Forward
-    | a > c && b == d = checkRowJump board [a, b] [c, d] (pred a) Backward
+    | (succ a) < c && b == d = checkRowJump board [a, b] [c, d] (succ a) Forward
+    | (pred a) > c && b == d = checkRowJump board [a, b] [c, d] (pred a) Backward
     | otherwise = False
 
 tryJump :: Board -> [String] -> Bool
 tryJump board (from:[]) = True
 tryJump board (from:to:rest) = tryOneJump board from to && tryJump board (to:rest)
 
+tryMove :: Board -> [String] -> Bool
+tryMove board [[a, b], [c, d]]
+    | a == c && succ b == d = True
+    | a == c && pred b == d = True
+    | a == c && b == d = True
+    | succ a == c && b == d = True
+    | pred a == c && b == d = True
+    | otherwise = False
+
+
 move :: Board -> String -> String -> String -> Board
 move board color from to
-    | color == "black" = setField (setField board B to) O from
-    | otherwise = setField (setField board W to) O from
+    | color == "black" = setField (setField board O from) B to
+    | otherwise = setField (setField board O from) W to
+
+
+checkWhiteWin :: Board -> Bool
+checkWhiteWin board =
+    (a7 board == W) && (a8 board == W) && (b7 board == W) && (b8 board == W) && (c7 board == W) && (c8 board == W) && (d7 board == W) && (d8 board == W)
+    && (e7 board == W) && (e8 board == W) && (f7 board == W) && (f8 board == W) && (g7 board == W) && (g8 board == W) && (h7 board == W) && (h8 board == W)
+
+checkBlackWin :: Board -> Bool
+checkBlackWin board =
+    (a1 board == B) && (a2 board == B) && (b1 board == B) && (b2 board == B) && (c1 board == B) && (c2 board == B) && (d1 board == B) && (d2 board == B)
+    && (e1 board == B) && (e2 board == B) && (f1 board == B) && (f2 board == B) && (g1 board == B) && (g2 board == B) && (h1 board == B) && (h2 board == B)
+
 
 -- makeTurn :: Board -> String -> String -> IO ()
 -- game board player = do
@@ -270,24 +292,53 @@ game board player
     | player == "black" =
         do
             print board
-            putStrLn (player ++ " turn")
-            moves <- getLine
-            let movesArray = parseMoves moves
-            --print movesArray
-            if checkMoves movesArray && tryJump board movesArray
-                then 
-                    game (move board player (head movesArray) (last movesArray)) "white"
-                else putStrLn "Invalid input, try again!\n" >> game board "black"
+
+            if checkWhiteWin board 
+                then putStrLn "\n!!! WHITE WINS !!!"
+                else do
+                    putStrLn (player ++ " turn")
+                    moves <- getLine
+                    let movesArray = parseMoves moves
+                    
+                    if checkMoves movesArray && getField board (head movesArray) == B
+                        then 
+                            if (length movesArray > 2)
+                                then
+                                    if tryJump (setField board O (head movesArray)) movesArray
+                                        then game (move board player (head movesArray) (last movesArray)) "white"
+                                        else putStrLn "Invalid input, try again!\n" >> game board "black"
+                                else
+                                     if tryJump board movesArray || tryMove board movesArray
+                                        then game (move board player (head movesArray) (last movesArray)) "white"
+                                        else putStrLn "Invalid input, try again!\n" >> game board "black"      
+                        else 
+                            putStrLn "Invalid input, try again!\n" >> game board "black" 
+                           
+
     | otherwise = 
         do
             print board
-            putStrLn (player ++ " turn")
-            moves <- getLine
-            let movesArray = parseMoves moves
-            if checkMoves movesArray && tryJump board movesArray
-                then 
-                    game (move board player (head movesArray) (last movesArray)) "black"
-                else putStrLn "Invalid input, try again!\n" >> game board "white"
+
+            if checkBlackWin board
+                then putStrLn "\n!!! BLACK WINS !!!"
+                else do
+                    putStrLn (player ++ " turn")
+                    moves <- getLine
+                    let movesArray = parseMoves moves
+                    print movesArray
+                    if checkMoves movesArray && getField board (head movesArray) == W
+                        then 
+                            if (length movesArray > 2)
+                                then
+                                    if tryJump (setField board O (head movesArray)) movesArray
+                                        then game (move board player (head movesArray) (last movesArray)) "black"
+                                        else putStrLn "Invalid input, try again!\n" >> game board "white"
+                                else
+                                     if tryJump board movesArray || tryMove board movesArray
+                                        then game (move board player (head movesArray) (last movesArray)) "black"
+                                        else putStrLn "Invalid input, try again!\n" >> game board "white"      
+                        else 
+                            putStrLn "Invalid input, try again!\n" >> game board "white" 
 
             
 
@@ -313,14 +364,12 @@ main = do
     putStrLn "Hello, choose starting color: black or white"
     color <- getLine
 
-    if color == "black" || color == "white"
-        then print (startBoard color)
-        else putStrLn "Wrong color, try again" >> main
-
     if color == "black"
-        then game (startBoard color) "black" 
-        else game (startBoard color) "white"
-
+        then game (startBoard "white") "black" 
+        else 
+            if color == "white" 
+                then game (startBoard "white") "white"
+                else putStrLn "Wrong color, try again" >> main
 
 -- foo :: String -> Board
 -- foo xd = Board [[]]

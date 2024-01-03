@@ -19,7 +19,7 @@ instance Show Board where
                   c1 c2 c3 c4 c5 c6 c7 c8
                   b1 b2 b3 b4 b5 b6 b7 b8
                   a1 a2 a3 a4 a5 a6 a7 a8 ) =
-        "+-----------------------------------+\n" ++
+        "\n+-----------------------------------+\n" ++
         "| 8 | " ++ show h1 ++ " | " ++ show h2 ++ " | " ++ show h3 ++ " | " ++ show h4 ++ " | " ++ show h5 ++ " | " ++ show h6 ++ " | " ++ show h7 ++ " | " ++ show h8 ++ " |\n" ++
         "|---+---+---+---+---+---+---+---+---|\n" ++
         "| 7 | " ++ show g1 ++ " | " ++ show g2 ++ " | " ++ show g3 ++ " | " ++ show g4 ++ " | " ++ show g5 ++ " | " ++ show g6 ++ " | " ++ show g7 ++ " | " ++ show g8 ++ " |\n" ++
@@ -287,13 +287,13 @@ game board player
                                 then
                                     if tryJump (setField board O (head movesArray)) movesArray
                                         then game (move board player (head movesArray) (last movesArray)) "white"
-                                        else putStrLn "Invalid input, try again!\n" >> game board "black"
+                                        else putStrLn "Invalid input, try again!" >> game board "black"
                                 else
                                      if tryJump board movesArray || tryMove board movesArray
                                         then game (move board player (head movesArray) (last movesArray)) "white"
-                                        else putStrLn "Invalid input, try again!\n" >> game board "black"
+                                        else putStrLn "Invalid input, try again!" >> game board "black"
                         else
-                            putStrLn "Invalid input, try again!\n" >> game board "black"
+                            putStrLn "Invalid input, try again!" >> game board "black"
 
     | otherwise =
         do
@@ -312,17 +312,44 @@ game board player
                                 then
                                     if tryJump (setField board O (head movesArray)) movesArray
                                         then game (move board player (head movesArray) (last movesArray)) "black"
-                                        else putStrLn "Invalid input, try again!\n" >> game board "white"
+                                        else putStrLn "Invalid input, try again!" >> game board "white"
                                 else
                                      if tryJump board movesArray || tryMove board movesArray
                                         then game (move board player (head movesArray) (last movesArray)) "black"
-                                        else putStrLn "Invalid input, try again!\n" >> game board "white"
+                                        else putStrLn "Invalid input, try again!" >> game board "white"
                         else
-                            putStrLn "Invalid input, try again!\n" >> game board "white"
+                            putStrLn "Invalid input, try again!" >> game board "white"
 
-main :: IO ()
-main = do
-    putStrLn "Hello, choose starting color: black or white"
+showInstructions :: IO ()
+showInstructions = do
+    putStrLn "\nThe aim of the game is to move all your pawns to the positions occupied at the beginning by your opponent,"
+    putStrLn "that is, the opposite, extreme two lines of fields. The player who first accomplishes this - wins.\n"
+    putStrLn "Main rules of the pawn movement in the game."
+    putStrLn "You can:"
+    putStrLn " - move your pawn to any adjacent free field horizontally or vertically (forward, backward or sideways)"
+    putStrLn " - jump over your own or your opponent's pawn from the field directly adjacent to the jumped pawn to the field directly behind it"
+    putStrLn " - you can jump several of your or your opponent's pawns from a field directly adjacent to the pawn you are jumping to a field directly behind them"
+    putStrLn " - you can make a whole series of jumps with one pawn according to the previous two rules - changing the direction of subsequent jumps is possible\n"
+    putStrLn "How to move your pawn?"
+    putStrLn "To move a pawn write its consecutive moves written in chess notation separated by a dash, for example A1-A3-A6\n"
+    welcomeMessage
+
+welcomeMessage :: IO ()
+welcomeMessage = do
+    putStrLn "Hello! Welcome to the \"jumpers board game!\""
+    putStrLn "To start game type start, to show instuctions how to play type help."
+    command <- getLine
+    
+    if command == "start" || command == "help"
+        then 
+            if command == "help"
+                then showInstructions
+                else putStrLn "Gl, hf!\n"
+        else putStrLn "Incorrect command, try again!\n" >> welcomeMessage
+
+startGame :: IO ()
+startGame = do
+    putStrLn "Choose starting color: black or white"
     color <- getLine
 
     if color == "black"
@@ -330,4 +357,9 @@ main = do
         else
             if color == "white"
                 then game startBoard "white"
-                else putStrLn "Wrong color, try again" >> main
+                else putStrLn "Wrong color, try again\n" >> startGame
+
+main :: IO ()
+main = do
+    welcomeMessage
+    startGame

@@ -1,0 +1,11 @@
+
+The aim of the game is to move all your pawns to the positions occupied at the beginning by your opponent,
+that is, the opposite, extreme two lines of fields. The player who first accomplishes this - wins.
+Main rules of the pawn movement in the game.
+You can:
+ - move your pawn to any adjacent free field horizontally or vertically (forward, backward or sideways)
+ - jump over your own or your opponent's pawn from the field directly adjacent to the jumped pawn to the field directly behind it
+ - you can jump several of your or your opponent's pawns from a field directly adjacent to the pawn you are jumping to a field directly behind them
+ - you can make a whole series of jumps with one pawn according to the previous two rules - changing the direction of subsequent jumps is possible
+How to move your pawn?
+To move a pawn write its consecutive moves written in chess notation separated by a dash, for example A1-A3-A6
